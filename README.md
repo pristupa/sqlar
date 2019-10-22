@@ -1,2 +1,2 @@
-# sqlalchemy-repository
+# sqlar
 Repository abstraction for SQLAlchemy
