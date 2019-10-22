@@ -21,8 +21,8 @@ class Repository(Generic[T, K]):
         pass
 
 
-def sqla_repository(repository_class):
-    class RepositoryImpl:
+def sqla_crud(repository_class):
+    class SQLAlchemyCRUDRepository:
         def __init__(self):
             self._identity_map = {}  # TODO: WeakRef?
 
@@ -34,10 +34,10 @@ def sqla_repository(repository_class):
 
     # TODO: inspect repository_class interface to generate more methods
 
-    return RepositoryImpl
+    return SQLAlchemyCRUDRepository
 
 
-@sqla_repository
+@sqla_crud
 class MyRepository(Repository[MyEntity, int]):
     pass
 
