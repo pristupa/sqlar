@@ -1,6 +1,6 @@
-from abc import abstractmethod
-from typing import Generic
 from typing import TypeVar
+
+from persipy.repository import Repository
 
 T = TypeVar('T')
 K = TypeVar('K')
@@ -13,12 +13,6 @@ class MyEntity:
 
 def fetch_from_database(id_: int) -> MyEntity:
     return MyEntity(id_)
-
-
-class Repository(Generic[T, K]):
-    @abstractmethod
-    def get(self, id_: K) -> T:
-        pass
 
 
 def sqla_crud(repository_class):
