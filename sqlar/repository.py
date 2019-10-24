@@ -50,8 +50,6 @@ def sqla_crud(repository_cls):
             except KeyError:
                 raise self.RepositoryException('Entity must be fetched with repository before being deleted')
             pk = inspect(entity).identity
-            if len(pk) == 1:
-                pk = pk[0]
             del self._identity_map[pk]
             session.delete(entity)
             session.flush()
@@ -81,6 +79,8 @@ def sqla_crud(repository_cls):
             pass
 
         def find_by_id(self, id_: K) -> Optional[T]:
+            if not isinstance(id_, tuple):
+                id_ = (id_,)
             if id_ in self._identity_map:
                 return self._identity_map[id_]
 
