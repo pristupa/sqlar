@@ -25,7 +25,7 @@ class Fixture:
             pass
 
         metadata.create_all(bind=self._engine)
-        self.repository = MyRepository(bind=self._engine)
+        self.repository = MyRepository(engine=self._engine)
 
     def execute(self, sql):
         return self._engine.execute(sql)

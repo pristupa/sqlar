@@ -41,7 +41,7 @@ def sqla_crud(repository_cls):
             pass
 
         def count(self) -> int:
-            return self._bind.execute(select([func.count()]).select_from(entity_table)).scalar()
+            return self._engine.execute(select([func.count()]).select_from(entity_table)).scalar()
 
         def delete(self, entity: T):
             try:
@@ -59,7 +59,7 @@ def sqla_crud(repository_cls):
                 self.delete(entity)
 
         def delete_all(self):
-            self._bind.execute(entity_table.delete())
+            self._engine.execute(entity_table.delete())
             self._identity_map = {}
             self._sessions = {}
 
@@ -71,7 +71,7 @@ def sqla_crud(repository_cls):
                 self.delete(entity)
             else:
                 expressions = (column == value for column, value in zip(entity_table.primary_key.columns, id_))
-                self._bind.execute(entity_table.delete().where(and_(*expressions)))
+                self._engine.execute(entity_table.delete().where(and_(*expressions)))
 
         def exists_by_id(self, id_: K) -> bool:
             pass
@@ -107,9 +107,9 @@ def sqla_crud(repository_cls):
         def save_many(self, entities: Iterable[T]) -> Iterable[T]:
             pass
 
-        def __init__(self, bind: Engine):
-            self._bind = bind
-            self._session_factory = sessionmaker(bind=self._bind)
+        def __init__(self, engine: Engine):
+            self._engine = engine
+            self._session_factory = sessionmaker(bind=self._engine)
             self._identity_map = {}
             self._sessions = {}
 
