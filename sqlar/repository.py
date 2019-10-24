@@ -1,6 +1,7 @@
-import sqlalchemy
+from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import inspect
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import sessionmaker
@@ -40,9 +41,7 @@ def sqla_crud(repository_cls):
             pass
 
         def count(self) -> int:
-            return self._bind.execute(
-                sqlalchemy.select([func.count()]).select_from(entity_table),
-            ).scalar()
+            return self._bind.execute(select([func.count()]).select_from(entity_table)).scalar()
 
         def delete(self, entity: T):
             try:
@@ -60,14 +59,19 @@ def sqla_crud(repository_cls):
                 self.delete(entity)
 
         def delete_all(self):
-            self._bind.execute(
-                sqlalchemy.delete(entity_table),
-            )
+            self._bind.execute(entity_table.delete())
             self._identity_map = {}
             self._sessions = {}
 
         def delete_by_id(self, id_: K):
-            pass
+            if not isinstance(id_, tuple):
+                id_ = (id_,)
+            if id_ in self._identity_map:
+                entity = self._identity_map[id_]
+                self.delete(entity)
+            else:
+                expressions = (column == value for column, value in zip(entity_table.primary_key.columns, id_))
+                self._bind.execute(entity_table.delete().where(and_(*expressions)))
 
         def exists_by_id(self, id_: K) -> bool:
             pass

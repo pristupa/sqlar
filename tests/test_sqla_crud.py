@@ -78,3 +78,14 @@ def test_delete_all():
 
     count = fixture.execute('SELECT COUNT(*) FROM my_entities;').scalar()
     assert count == 0
+
+
+def test_delete_by_id():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2);')
+
+    # Act
+    fixture.repository.delete_by_id(1)
+
+    result = fixture.execute('SELECT * FROM my_entities;')
+    assert list(result) == [(2,)]
