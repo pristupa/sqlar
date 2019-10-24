@@ -1,3 +1,5 @@
+from sqlalchemy import inspect
+
 from persipy import CRUDRepository
 from sqlalchemy import func
 from sqlalchemy import select
@@ -41,9 +43,19 @@ def sqla_crud(repository_cls):
             return self._bind.execute(select([func.count()]).select_from(entity_table)).scalar()
 
         def delete(self, entity: T):
-            pass
-            # self._session.delete(entity)
-            # self._session.flush()
+            if entity not in self._sessions:
+                raise self.RepositoryException('Entity must be fetched with repository before being deleted')
+            instance_state = inspect(entity)
+            if not instance_state.persistent:
+                raise self.RepositoryException('Entity {entity} is not persisted')
+            pk = instance_state.identity
+            if len(pk) == 1:
+                pk = pk[0]
+            del self._identity_map[pk]
+            session = self._sessions[entity]
+            session.delete(entity)
+            session.flush()
+            del self._sessions[entity]
 
         def delete_many(self, entities: Iterable[T]):
             pass
@@ -65,18 +77,17 @@ def sqla_crud(repository_cls):
             pass
 
         def find_by_id(self, id_: K) -> Optional[T]:
-            pass
-            # if id_ in self._identity_map:
-            #     return self._identity_map[id_]
-            #
-            # session = self._session_factory()
-            # instance = session.query(entity_cls).get(id_)
-            # if instance is None:
-            #     return None
-            #
-            # self._identity_map[id_] = instance
-            # self._sessions[instance] = session
-            # return instance
+            if id_ in self._identity_map:
+                return self._identity_map[id_]
+
+            session = self._session_factory()
+            instance = session.query(entity_cls).get(id_)
+            if instance is None:
+                return None
+
+            self._identity_map[id_] = instance
+            self._sessions[instance] = session
+            return instance
 
         def save(self, entity: T) -> T:
             pass

@@ -9,13 +9,12 @@ from sqlalchemy.orm import mapper
 from sqlar.repository import sqla_crud
 
 
-class MyEntity:
-    def __init__(self, id_: int):
-        self.id = id_
-
-
 class Fixture:
     def __init__(self):
+        class MyEntity:
+            def __init__(self, id_: int):
+                self.id = id_
+
         self._engine = create_engine('sqlite://')
         metadata = MetaData()
         my_entity_table = Table('my_entities', metadata, Column('id', Integer, primary_key=True))
@@ -51,5 +50,5 @@ def test_delete():
     fixture.repository.delete(entity)
 
     result = fixture.execute('SELECT * FROM my_entities;')
-    assert result == [(2,)]
+    assert list(result) == [(2,)]
     assert fixture.repository.find_by_id(1) is None
