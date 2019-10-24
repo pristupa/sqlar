@@ -1,10 +1,6 @@
 import sqlalchemy
-
-from sqlalchemy import inspect
-
-from persipy import CRUDRepository
 from sqlalchemy import func
-from sqlalchemy import select
+from sqlalchemy import inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import sessionmaker
@@ -12,6 +8,8 @@ from sqlalchemy.orm.exc import UnmappedClassError
 from typing import Iterable
 from typing import Optional
 from typing import TypeVar
+
+from persipy import CRUDRepository
 
 T = TypeVar('T')
 K = TypeVar('K')
@@ -51,10 +49,7 @@ def sqla_crud(repository_cls):
                 session = self._sessions[entity]
             except KeyError:
                 raise self.RepositoryException('Entity must be fetched with repository before being deleted')
-            instance_state = inspect(entity)
-            if not instance_state.persistent:
-                raise self.RepositoryException('Entity {entity} is not persisted')
-            pk = instance_state.identity
+            pk = inspect(entity).identity
             if len(pk) == 1:
                 pk = pk[0]
             del self._identity_map[pk]
@@ -67,11 +62,11 @@ def sqla_crud(repository_cls):
                 self.delete(entity)
 
         def delete_all(self):
-            entities = list(self._sessions)
-            self.delete_many(entities)
             self._bind.execute(
                 sqlalchemy.delete(entity_table),
             )
+            self._identity_map = {}
+            self._sessions = {}
 
         def delete_by_id(self, id_: K):
             pass
