@@ -1,3 +1,5 @@
+import sqlalchemy
+
 from sqlalchemy import inspect
 
 from persipy import CRUDRepository
@@ -40,10 +42,14 @@ def sqla_crud(repository_cls):
             pass
 
         def count(self) -> int:
-            return self._bind.execute(select([func.count()]).select_from(entity_table)).scalar()
+            return self._bind.execute(
+                sqlalchemy.select([func.count()]).select_from(entity_table),
+            ).scalar()
 
         def delete(self, entity: T):
-            if entity not in self._sessions:
+            try:
+                session = self._sessions[entity]
+            except KeyError:
                 raise self.RepositoryException('Entity must be fetched with repository before being deleted')
             instance_state = inspect(entity)
             if not instance_state.persistent:
@@ -52,17 +58,20 @@ def sqla_crud(repository_cls):
             if len(pk) == 1:
                 pk = pk[0]
             del self._identity_map[pk]
-            session = self._sessions[entity]
             session.delete(entity)
             session.flush()
             del self._sessions[entity]
 
         def delete_many(self, entities: Iterable[T]):
-            pass
-            # self._session
+            for entity in entities:
+                self.delete(entity)
 
         def delete_all(self):
-            pass
+            entities = list(self._sessions)
+            self.delete_many(entities)
+            self._bind.execute(
+                sqlalchemy.delete(entity_table),
+            )
 
         def delete_by_id(self, id_: K):
             pass

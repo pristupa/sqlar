@@ -52,3 +52,29 @@ def test_delete():
     result = fixture.execute('SELECT * FROM my_entities;')
     assert list(result) == [(2,)]
     assert fixture.repository.find_by_id(1) is None
+
+
+def test_delete_many():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2), (3);')
+    entity_1 = fixture.repository.find_by_id(1)
+    entity_3 = fixture.repository.find_by_id(3)
+
+    # Act
+    fixture.repository.delete_many([entity_1, entity_3])
+
+    result = fixture.execute('SELECT * FROM my_entities;')
+    assert list(result) == [(2,)]
+    assert fixture.repository.find_by_id(1) is None
+    assert fixture.repository.find_by_id(3) is None
+
+
+def test_delete_all():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2), (3);')
+
+    # Act
+    fixture.repository.delete_all()
+
+    count = fixture.execute('SELECT COUNT(*) FROM my_entities;').scalar()
+    assert count == 0
