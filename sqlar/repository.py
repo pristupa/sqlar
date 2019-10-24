@@ -51,8 +51,8 @@ def sqla_crud(repository_cls):
             pk = inspect(entity).identity
             del self._identity_map[pk]
             session.delete(entity)
-            session.flush()
-            # session.close()
+            session.commit()
+            session.close()
             del self._sessions[entity]
 
         def delete_many(self, entities: Iterable[T]):
@@ -62,8 +62,8 @@ def sqla_crud(repository_cls):
         def delete_all(self):
             self._engine.execute(entity_table.delete())
             self._identity_map = {}
-            # for session in self._sessions.values():
-            #     session.close()
+            for session in self._sessions.values():
+                session.close()
             self._sessions = {}
 
         def delete_by_id(self, id_: K):
