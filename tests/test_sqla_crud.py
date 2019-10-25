@@ -109,3 +109,37 @@ def test_not_exists_by_id():
     exists = fixture.repository.exists_by_id(3)
 
     assert exists is False
+
+
+def test_find_all():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2), (3);')
+
+    # Act
+    entities = fixture.repository.find_all()
+
+    ids = [entity.id for entity in entities]
+    assert len(ids) == 3
+    assert set(ids) == {1, 2, 3}
+
+
+def test_find_all_by_id():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2), (3);')
+
+    # Act
+    entities = fixture.repository.find_all_by_id([1, 4, 3])
+
+    ids = [entity.id for entity in entities]
+    assert len(ids) == 2
+    assert set(ids) == {1, 3}
+
+
+def test_find_by_id():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2), (3);')
+
+    # Act
+    entity = fixture.repository.find_by_id(2)
+
+    assert entity.id == 2

@@ -86,10 +86,14 @@ def sqla_crud(repository_cls):
             return self._engine.execute(select([exists().where(and_(*expressions))])).scalar()
 
         def find_all(self) -> Iterable[T]:
-            pass
+            ids = self._engine.execute(select(entity_table.primary_key.columns))
+            ids = next(zip(*ids))
+            return self.find_all_by_id(ids)
 
         def find_all_by_id(self, ids: Iterable[K]) -> Iterable[T]:
-            pass
+            result = [self.find_by_id(id_) for id_ in ids]
+            result = [entity for entity in result if entity]
+            return result
 
         def find_by_id(self, id_: K) -> Optional[T]:
             if not isinstance(id_, tuple):
