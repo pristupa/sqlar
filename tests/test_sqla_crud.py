@@ -89,3 +89,23 @@ def test_delete_by_id():
 
     result = fixture.execute('SELECT * FROM my_entities;')
     assert list(result) == [(2,)]
+
+
+def test_exists_by_id():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2);')
+
+    # Act
+    exists = fixture.repository.exists_by_id(2)
+
+    assert exists is True
+
+
+def test_not_exists_by_id():
+    fixture = Fixture()
+    fixture.execute('INSERT INTO my_entities (id) VALUES (1), (2);')
+
+    # Act
+    exists = fixture.repository.exists_by_id(3)
+
+    assert exists is False

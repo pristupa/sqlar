@@ -1,4 +1,5 @@
 from sqlalchemy import and_
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import inspect
 from sqlalchemy import select
@@ -77,7 +78,12 @@ def sqla_crud(repository_cls):
                 self._engine.execute(entity_table.delete().where(and_(*expressions)))
 
         def exists_by_id(self, id_: K) -> bool:
-            pass
+            if not isinstance(id_, tuple):
+                id_ = (id_,)
+            if id_ in self._identity_map:
+                return True
+            expressions = (column == value for column, value in zip(entity_table.primary_key.columns, id_))
+            return self._engine.execute(select([exists().where(and_(*expressions))])).scalar()
 
         def find_all(self) -> Iterable[T]:
             pass
