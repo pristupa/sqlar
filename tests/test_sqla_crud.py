@@ -1,3 +1,6 @@
+from sqlalchemy import String
+from typing import Optional
+
 from persipy import CRUDRepository
 from sqlalchemy import Column
 from sqlalchemy import Integer
@@ -12,12 +15,18 @@ from sqlar.repository import sqla_crud
 class Fixture:
     def __init__(self):
         class MyEntity:
-            def __init__(self, id_: int):
+            def __init__(self, id_: int, name: Optional[str]):
                 self.id = id_
+                self.name = name
 
         self._engine = create_engine('sqlite://')
         metadata = MetaData()
-        my_entity_table = Table('my_entities', metadata, Column('id', Integer, primary_key=True))
+        my_entity_table = Table(
+            'my_entities',
+            metadata,
+            Column('id', Integer, primary_key=True),
+            Column('name', String),
+        )
         mapper(MyEntity, my_entity_table)
 
         @sqla_crud
@@ -49,7 +58,7 @@ def test_delete():
     # Act
     fixture.repository.delete(entity)
 
-    result = fixture.execute('SELECT * FROM my_entities;')
+    result = fixture.execute('SELECT id FROM my_entities;')
     assert list(result) == [(2,)]
     assert fixture.repository.find_by_id(1) is None
 
@@ -63,7 +72,7 @@ def test_delete_many():
     # Act
     fixture.repository.delete_many([entity_1, entity_3])
 
-    result = fixture.execute('SELECT * FROM my_entities;')
+    result = fixture.execute('SELECT id FROM my_entities;')
     assert list(result) == [(2,)]
     assert fixture.repository.find_by_id(1) is None
     assert fixture.repository.find_by_id(3) is None
@@ -87,7 +96,7 @@ def test_delete_by_id():
     # Act
     fixture.repository.delete_by_id(1)
 
-    result = fixture.execute('SELECT * FROM my_entities;')
+    result = fixture.execute('SELECT id FROM my_entities;')
     assert list(result) == [(2,)]
 
 
@@ -143,3 +152,38 @@ def test_find_by_id():
     entity = fixture.repository.find_by_id(2)
 
     assert entity.id == 2
+
+
+def test_save():
+    fixture = Fixture()
+    fixture.execute("INSERT INTO my_entities (id, name) VALUES (1, 'old'), (2, 'old'), (3, 'old');")
+    entity = fixture.repository.find_by_id(2)
+    entity.name = 'new'
+
+    # Act
+    entity = fixture.repository.save(entity)
+
+    assert entity.name == 'new'
+    entities = fixture.execute('SELECT id, name FROM my_entities;').fetchall()
+    entities = [(id_, name) for id_, name in entities]
+    assert len(entities) == 3
+    assert set(entities) == {(1, 'old'), (2, 'new'), (3, 'old')}
+
+
+def test_save_many():
+    fixture = Fixture()
+    fixture.execute("INSERT INTO my_entities (id, name) VALUES (1, 'old'), (2, 'old'), (3, 'old');")
+    entities = fixture.repository.find_all_by_id([1, 3])
+    for entity in entities:
+        entity.name = 'new'
+
+    # Act
+    entities = fixture.repository.save_many(entities)
+
+    entities = list(entities)
+    assert len(entities) == 2
+    assert all(entity.name == 'new' for entity in entities)
+    entities = fixture.execute('SELECT id, name FROM my_entities;').fetchall()
+    entities = [(id_, name) for id_, name in entities]
+    assert len(entities) == 3
+    assert set(entities) == {(1, 'new'), (2, 'old'), (3, 'new')}

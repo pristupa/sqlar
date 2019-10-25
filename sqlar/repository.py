@@ -111,11 +111,10 @@ def sqla_crud(repository_cls):
             return instance
 
         def save(self, entity: T) -> T:
-            pass
-            # if entity not in self._sessions:
-            #     raise self.RepositoryException(f'Entity must be fetched with repository before saving: {entity}')
-            # self._sessions[entity].flush()
-            # return entity
+            if entity not in self._sessions:
+                raise self.RepositoryException(f'Entity must be fetched with repository before saving: {entity}')
+            self._sessions[entity].flush()
+            return entity
 
         def save_many(self, entities: Iterable[T]) -> Iterable[T]:
             return [self.save(entity) for entity in entities]
