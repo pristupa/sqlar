@@ -118,7 +118,7 @@ def sqla_crud(repository_cls):
             # return entity
 
         def save_many(self, entities: Iterable[T]) -> Iterable[T]:
-            pass
+            return [self.save(entity) for entity in entities]
 
         def __init__(self, engine: Engine):
             self._engine = engine
