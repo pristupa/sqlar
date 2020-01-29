@@ -114,7 +114,8 @@ def sqla_crud(repository_cls):
 
         def save(self, entity: T) -> T:
             if entity not in self._sessions:
-                raise self.RepositoryException(f'Entity must be fetched with repository before saving: {entity}')
+                self._sessions[entity] = self._session_factory()
+                self._sessions[entity].add(entity)
             self._sessions[entity].flush()
             return entity
 
@@ -128,6 +129,12 @@ def sqla_crud(repository_cls):
             self._identity_map = {}
             self._sessions = {}
 
-    # TODO: inspect repository_cls interface to generate more methods
+    # def func1(self, name, lastname):
+    #     return self._session_factory().query(entity_cls).filter(
+    #         getattr(entity_cls, 'name') == name,
+    #         getattr(entity_cls, 'lastname') == lastname,
+    #     ).one_or_none()
+    #
+    # RepositoryImpl.find_one_by_name_and_lastname = func1
 
     return RepositoryImpl

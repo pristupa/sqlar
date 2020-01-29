@@ -12,26 +12,32 @@ from sqlalchemy.orm import mapper
 from sqlar.repository import sqla_crud
 
 
+class MyEntity:
+    def __init__(self, id_: int, name: Optional[str], lastname: Optional[str]):
+        self.id = id_
+        self.name = name
+        self.lastname = lastname
+
+
+metadata = MetaData()
+my_entity_table = Table(
+    'my_entities',
+    metadata,
+    Column('id', Integer, primary_key=True),
+    Column('name', String),
+    Column('lastname', String),
+)
+mapper(MyEntity, my_entity_table)
+
+
 class Fixture:
     def __init__(self):
-        class MyEntity:
-            def __init__(self, id_: int, name: Optional[str]):
-                self.id = id_
-                self.name = name
-
         self._engine = create_engine('sqlite://')
-        metadata = MetaData()
-        my_entity_table = Table(
-            'my_entities',
-            metadata,
-            Column('id', Integer, primary_key=True),
-            Column('name', String),
-        )
-        mapper(MyEntity, my_entity_table)
 
         @sqla_crud
         class MyRepository(CRUDRepository[MyEntity, int]):
-            pass
+            def find_one_by_name_and_lastname(self, name: str, lastname: str) -> MyEntity:
+                pass
 
         metadata.create_all(bind=self._engine)
         self.repository = MyRepository(engine=self._engine)
@@ -154,6 +160,20 @@ def test_find_by_id():
     assert entity.id == 2
 
 
+def test_save_new():
+    fixture = Fixture()
+    entity = MyEntity(id_=1, name='name', lastname='lastname')
+
+    # Act
+    entity = fixture.repository.save(entity)
+
+    entities = fixture.repository.find_all()
+    assert len(entities) == 1
+    assert entities[0].id == 1
+    assert entities[0].name == 'name'
+    assert entities[0].lastname == 'lastname'
+
+
 def test_save():
     fixture = Fixture()
     fixture.execute("INSERT INTO my_entities (id, name) VALUES (1, 'old'), (2, 'old'), (3, 'old');")
@@ -187,3 +207,13 @@ def test_save_many():
     entities = [(id_, name) for id_, name in entities]
     assert len(entities) == 3
     assert set(entities) == {(1, 'new'), (2, 'old'), (3, 'new')}
+
+
+# def test_find_one_by_name_and_lastname():
+#     fixture = Fixture()
+#     fixture.execute("INSERT INTO my_entities (id, name, lastname) VALUES (1, 'name', NULL), (2, 'name', 'lastname');")
+#
+#     # Act
+#     entity = fixture.repository.find_one_by_name_and_lastname('name', 'lastname')
+#
+#     assert entity.id == 2
