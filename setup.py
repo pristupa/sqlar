@@ -19,5 +19,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=['persipy==0.0.4'],
+    install_requires=[
+        'persipy==0.0.4',
+        'sqlalchemy==1.3.13',
+    ],
 )
