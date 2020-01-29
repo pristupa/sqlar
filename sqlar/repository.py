@@ -1,3 +1,8 @@
+from typing import Iterable
+from typing import Optional
+from typing import TypeVar
+
+from injector import inject
 from sqlalchemy import and_
 from sqlalchemy import exists
 from sqlalchemy import func
@@ -7,9 +12,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import UnmappedClassError
-from typing import Iterable
-from typing import Optional
-from typing import TypeVar
 
 from persipy import CRUDRepository
 
@@ -119,6 +121,7 @@ def sqla_crud(repository_cls):
         def save_many(self, entities: Iterable[T]) -> Iterable[T]:
             return [self.save(entity) for entity in entities]
 
+        @inject
         def __init__(self, engine: Engine):
             self._engine = engine
             self._session_factory = sessionmaker(bind=self._engine)
