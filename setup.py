@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sqlar",
-    version="0.2.0",
+    version="0.2.1",
     author="Pavel V. Pristupa",
     author_email="pristupa@gmail.com",
     description="SQLAlchemy implementation for Python Persistance API (persipy)",
@@ -20,7 +20,7 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        'injector==0.18.2',
+        'injector==0.15.0',
         'persipy==0.0.4',
         'sqlalchemy==1.3.13',
     ],
