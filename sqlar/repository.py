@@ -1,12 +1,17 @@
+import inspect
+import sys
+import warnings
+
+from persipy.repository import Repository
 from typing import Iterable
 from typing import Optional
 from typing import TypeVar
 
 from injector import inject
+import sqlalchemy
 from sqlalchemy import and_
 from sqlalchemy import exists
 from sqlalchemy import func
-from sqlalchemy import inspect
 from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import class_mapper
@@ -51,7 +56,7 @@ def sqla_crud(repository_cls):
                 session = self._sessions[entity]
             except KeyError:
                 raise self.RepositoryException('Entity must be fetched with repository before being deleted')
-            pk = inspect(entity).identity
+            pk = sqlalchemy.inspect(entity).identity
             del self._identity_map[pk]
             session.delete(entity)
             session.commit()
@@ -136,5 +141,24 @@ def sqla_crud(repository_cls):
     #     ).one_or_none()
     #
     # RepositoryImpl.find_one_by_name_and_lastname = func1
+
+    interfaces = (interface for interface in repository_cls.__bases__ if not issubclass(interface, Repository))
+    for interface in interfaces:
+        symbols = ((name, obj) for module in list(sys.modules.values()) for name, obj in inspect.getmembers(module))
+        for name, obj in symbols:
+            if inspect.isclass(obj) and obj is not interface and issubclass(obj, interface):
+                interface_impl_cls = obj
+                break
+        else:
+            interface_impl_cls = None
+        if interface_impl_cls is None:
+            warnings.warn(f'Interface {interface} is not implemented')
+        methods = list(
+            (method_name, method)
+            for method_name, method in inspect.getmembers(interface_impl_cls, predicate=inspect.isfunction)
+            if method_name not in ('__init__', '__new__')
+        )
+        for method_name, method in methods:
+            setattr(RepositoryImpl, method_name, method)
 
     return RepositoryImpl

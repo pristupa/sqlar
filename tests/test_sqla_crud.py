@@ -1,6 +1,9 @@
+from abc import abstractmethod
+
 from sqlalchemy import String
 from typing import Optional
 
+from sqlar import hints
 from persipy import CRUDRepository
 from sqlalchemy import Column
 from sqlalchemy import Integer
@@ -30,12 +33,31 @@ my_entity_table = Table(
 mapper(MyEntity, my_entity_table)
 
 
+class MyRepositoryCustom:
+    @abstractmethod
+    def add_two_numbers(self, a: int, b: int) -> int:
+        pass
+
+    @abstractmethod
+    def find_with_id_1(self) -> MyEntity:
+        pass
+
+
+class MyRepositoryImpl(MyRepositoryCustom, hints.CustomRepository[MyEntity, int]):
+    def add_two_numbers(self, a: int, b: int) -> int:
+        return a + b
+
+    def find_with_id_1(self) -> MyEntity:
+        session = self._session_factory()
+        return session.query(MyEntity).get(1)
+
+
 class Fixture:
     def __init__(self):
         self._engine = create_engine('sqlite://')
 
         @sqla_crud
-        class MyRepository(CRUDRepository[MyEntity, int]):
+        class MyRepository(CRUDRepository[MyEntity, int], MyRepositoryCustom):
             def find_one_by_name_and_lastname(self, name: str, lastname: str) -> MyEntity:
                 pass
 
@@ -217,3 +239,15 @@ def test_save_many():
 #     entity = fixture.repository.find_one_by_name_and_lastname('name', 'lastname')
 #
 #     assert entity.id == 2
+
+
+def test_custom_methods():
+    fixture = Fixture()
+    fixture.execute("INSERT INTO my_entities (id, name) VALUES (1, 'old');")
+
+    # Act
+    result = fixture.repository.add_two_numbers(2, 3)
+    with_id_1 = fixture.repository.find_with_id_1()
+
+    assert result == 5
+    assert with_id_1.id == 1
