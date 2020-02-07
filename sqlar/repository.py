@@ -3,6 +3,7 @@ from typing import Optional
 from typing import TypeVar
 
 from injector import inject
+from persipy.exceptions import NotFoundException
 from sqlalchemy import and_
 from sqlalchemy import exists
 from sqlalchemy import func
@@ -111,6 +112,12 @@ def sqla_crud(repository_cls):
             self._identity_map[id_] = instance
             self._sessions[instance] = session
             return instance
+
+        def get_by_id(self, id_: K) -> T:
+            entity = self.find_by_id(id_)
+            if entity is None:
+                raise NotFoundException(f'{entity_cls} with ID={id_} not found')
+            return entity
 
         def save(self, entity: T) -> T:
             if entity not in self._sessions:
