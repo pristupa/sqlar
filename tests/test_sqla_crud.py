@@ -1,14 +1,16 @@
-from sqlalchemy import String
 from typing import Optional
 
-from persipy import CRUDRepository
+import pytest
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
+from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy import create_engine
 from sqlalchemy.orm import mapper
 
+from persipy import CRUDRepository
+from sqlar.exceptions import NotFoundException
 from sqlar.repository import sqla_crud
 
 
@@ -158,6 +160,14 @@ def test_find_by_id():
     entity = fixture.repository.find_by_id(2)
 
     assert entity.id == 2
+
+
+def test_get_by_id():
+    fixture = Fixture()
+
+    with pytest.raises(NotFoundException, match="<class 'test_sqla_crud.MyEntity'> with ID=2 not found"):
+        # Act
+        fixture.repository.get_by_id(2)
 
 
 def test_save_new():

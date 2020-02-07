@@ -3,7 +3,6 @@ from typing import Optional
 from typing import TypeVar
 
 from injector import inject
-from persipy.exceptions import NotFoundException
 from sqlalchemy import and_
 from sqlalchemy import exists
 from sqlalchemy import func
@@ -15,6 +14,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import UnmappedClassError
 
 from persipy import CRUDRepository
+from .exceptions import NotFoundException
 
 T = TypeVar('T')
 K = TypeVar('K')
@@ -116,7 +116,7 @@ def sqla_crud(repository_cls):
         def get_by_id(self, id_: K) -> T:
             entity = self.find_by_id(id_)
             if entity is None:
-                raise NotFoundException(f'{entity_cls} with ID={id_} not found')
+                raise NotFoundException(id_, entity_cls)
             return entity
 
         def save(self, entity: T) -> T:
